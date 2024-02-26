@@ -1,73 +1,108 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+## 요구조건
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+1. 사용자는 일반 사용자 또는 사업자 사용자로 회원가입 및 로그인 할 수 있다.
+   1. 일반 사용자 → `User`
+   2. 사업자 사용자 → `Partner`
+2. `Partner`는 복수의 `Accommodation`을 CRUD 할 수 있다.
+3. `Accommodation`은 복수의 `Room`을 가진다
+4. `Room`은 복수의 `Reservation`을 가진다.
+   1. `Room`은 하나의 날짜에 대해서는 하나의 `Reservation` 만을 가진다.
+   2. `Reservation`은 연박을 고려하지 않는다.
+   3. `Reservation`은 대실 등의 경우를 고려하지 않고 숙박의 경우만을 다룬다.
+5. `User`는 복수의 `Reservation`을 가질 수 있다.
+6. `Reservation`은 2024년 3월 31일까지만 가능하다.
+7. 로그인 하지 않은 사용자도 다음의 조건들을 사용하여 예약 가능한 숙소 목록을 볼 수 있다.
+   1. 날짜
+   2. `Region`
+   3. `AccommodationType`
+8. `Partner`는 `isReserved` 상태의 `Reservation`은 `checkedInAt`을 할당할 수 있다.
+9. `checkedInAt` 이 할당 된 `Reservation`에 대해 `User`는 `Review`를 생성할 수 있다.
+10. `isReserved` 상태의 `Reservation`은 일반 고객과 사업자 고객 양쪽 모두에 의해 취소 될 수 있다.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+---
 
-## Description
+## Modeling
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+### User
 
-## Installation
+- `id` : number
+- `email` : string
+- `encryptedPassword` : string
+- `profile` : UserProfile
+  - `nickname` : string
+  - `phoneNumber` : string
 
-```bash
-$ npm install
-```
+### Partner
 
-## Running the app
+- `id` : number
+- `email` : string
+- `encryptedPassword` : string
+- `name` : string
+- `phoneNumber` : string
+- `accommodations` : Accommodation[]
 
-```bash
-# development
-$ npm run start
+### Accommodation
 
-# watch mode
-$ npm run start:dev
+- `partner` : Partner - 숙소 제공
+- `name` : string - 숙소명
+- `rooms`: Room[] - 룸
+- `regions` : Regions - 숙소가 속하는 지역들
+- `address1` : string - 숙소의 주소
+- `address2` : string - 숙소의 상세 주소
+- `latitude` : number - 위도
+- `longitude` : number - 경도
+- `imgUrl` : string - 대표 이미지의 주소
+- `type` : AccomdationType
+  - AccommodationType
+    - hotel
+    - motel
+    - resort
+    - pension
+    - guestHouse
+    - poolVilla
+    - camping
+    - glamping
+- `description` : string - 한 줄 소개
+- `reviews` : Review[] - 리뷰들
+- `~~amemities` : Amenity[] - 서비스 및 부대시설~~
 
-# production mode
-$ npm run start:prod
-```
+### Room
 
-## Test
+- `accommodation` : Accommodation
+- `name` : string - 이름
+- `originalPrice` : number - 정가
+- `price` : number - 판매가
+- `checkInTime` : string - 입실 시간
+- `checkOutTime` : string - 퇴실 시간
+- `description` : string - 객실 한줄 소개
+- `reservations` : Reservations[] - 예약들
 
-```bash
-# unit tests
-$ npm run test
+### Region
 
-# e2e tests
-$ npm run test:e2e
+- `id` : number
+- `name` : string
+- `accommodations` : Accommodation[]
 
-# test coverage
-$ npm run test:cov
-```
+### Reservation
 
-## Support
+- `id` : number
+- `date` : Date
+- `isReserved` : boolean - 예약 여부
+- `reservedBy` : User?
+- `room` : Room
+- `isCheckedIn` : boolean - 체크인 여부
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### Review
 
-## Stay in touch
+- `id` : number
+- `room` : Room
+- `user` : User
+- `createdAt` : Date
+- `rating` : number
+- `content`: string?
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+### ~~Bookmark~~
 
-## License
+### ~~Amenity~~
 
-Nest is [MIT licensed](LICENSE).
+---
